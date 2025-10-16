@@ -25,11 +25,44 @@ public class DogApiBreedFetcher implements BreedFetcher {
      */
     @Override
     public List<String> getSubBreeds(String breed) {
-        // TODO Task 1: Complete this method based on its provided documentation
-        //      and the documentation for the dog.ceo API. You may find it helpful
-        //      to refer to the examples of using OkHttpClient from the last lab,
-        //      as well as the code for parsing JSON responses.
-        // return statement included so that the starter code can compile and run.
-        return new ArrayList<>();
+        // Build the API URL for fetching sub-breeds
+        String url = "https://dog.ceo/api/breed/" + breed + "/list";
+        
+        // Create the HTTP request
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        
+        try (Response response = client.newCall(request).execute()) {
+            // Get the response body as a string
+            String responseBody = response.body().string();
+            
+            // Parse the JSON response
+            JSONObject jsonResponse = new JSONObject(responseBody);
+            
+            // Check if the API call was successful
+            String status = jsonResponse.getString("status");
+            if (!"success".equals(status)) {
+                throw new BreedNotFoundException(breed);
+            }
+            
+            // Extract the sub-breeds array from the "message" field
+            JSONArray subBreedsArray = jsonResponse.getJSONArray("message");
+            
+            // Convert the JSON array to a List<String>
+            List<String> subBreeds = new ArrayList<>();
+            for (int i = 0; i < subBreedsArray.length(); i++) {
+                subBreeds.add(subBreedsArray.getString(i));
+            }
+            
+            return subBreeds;
+            
+        } catch (IOException e) {
+            // If the API call fails, throw BreedNotFoundException
+            throw new BreedNotFoundException(breed);
+        } catch (Exception e) {
+            // If JSON parsing fails or any other error occurs, throw BreedNotFoundException
+            throw new BreedNotFoundException(breed);
+        }
     }
 }
